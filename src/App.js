@@ -1,89 +1,54 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
-import { gql } from '@apollo/client';
+import { useQuery, gql } from '@apollo/client';
 
-class App extends React.Component {
-    client = "";
-
-    constructor(props) {
-        super(props)
-
-        this.state = {
-            client: {},
-            result: {}
-        };
-
-        client = new ApolloClient({
-            uri: 'https://api.spacex.land/graphql/',
-            cache: new InMemoryCache()
-        });
+const GET_DATA = gql`
+{
+  launchesPast(limit: 10) {
+    mission_name
+    launch_site {
+      site_name_long
     }
+  }
+}
+`;
 
-    componentDidMount() {
-        let { loading, error, data } = useQuery(gql`
-            {
-                launchesPast(limit: 10) {
-                    launch_date_unix
-                    details
-                }
-            }
-        `);
+function Posts() {
+    const { loading, data } = useQuery(GET_DATA);
 
-        console.log(data);
+    if (loading) return "Loading...";
 
-        this.state.client.query({
-            query: gql`
-            {
-                launchesPast(limit: 10) {
-                    launch_date_unix
-                    details
-                }
-            }
-            `
-        })
-            .then(result => {
-                console.log(typeof result.data.launchesPast);
+    const { launchesPast } = data;
 
-                this.setState({ result: result.data.launchesPast })
-            });
-    }
+    return launchesPast.map((launch) => (
+        <div>
+            {launch.mission_name} - {launch.launch_site.site_name_long}
+        </div>
+    ));
+}
 
-    render() {
-        let launches = (<></>);
+function App() {
+    return (
+        <div className="App">
+            <header className="App-header">
+                <img src={logo} className="App-logo" alt="logo" />
+                <p>
+                    Edit <code>src/App.js</code> and save to reload.
+                </p>
+                <a
+                    className="App-link"
+                    href="https://reactjs.org"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Learn React
+                </a>
 
-        console.log(typeof this.state.result);
-
-        // for (let entry of this.state.result) {
-        //     launches += (
-        //         { entry }
-        //     )
-        // }
-
-        return (
-            <ApolloProvider client={client}>
-                <div className="App">
-                    <header className="App-header">
-                        <img src={logo} className="App-logo" alt="logo" />
-                        <p>
-                            Edit <code>src/App.js</code> and save to reload.
-                    </p>
-                        <a
-                            className="App-link"
-                            href="https://reactjs.org"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            Learn React
-                    </a>
-
-                        {launches}
-                    </header>
-                </div>
-            </ApolloProvider>
-        );
-    }
+                <Posts />
+            </header>
+        </div>
+    );
 }
 
 export default App;
